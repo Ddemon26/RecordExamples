@@ -2,6 +2,8 @@
 
 [![Join our Discord](https://img.shields.io/badge/Discord-Join%20Us-7289DA?logo=discord&logoColor=white)](https://discord.gg/knwtcq3N2a)
 
+---
+
 ## Getting Started
 
 To begin working with this repository, follow these steps:
@@ -13,17 +15,45 @@ To begin working with this repository, follow these steps:
 
 2. **Open in Unity**: Use Unity Hub or the Unity Editor to open the project.
 
-3. **Explore the Examples**: Browse through the examples to understand how C# records can be effectively used in different game development scenarios.
+3. **Explore the Examples**: Browse through the examples to understand how C# 9.0 records can be effectively used in different game development scenarios.
+
+---
 
 ## Overview
 
-The **RecordExamples** repository demonstrates how to use **C# Records** effectively in Unity game development. Records are powerful, immutable data structures that improve code readability, maintainability, and safety—making them ideal for preventing unintended modifications to game data. This repository is geared towards Unity developers looking to leverage records for efficient and reliable data management.
+The **RecordExamples** repository demonstrates how to use **C# 9.0 Records** effectively in Unity game development. Records are powerful, immutable data structures that improve code readability, maintainability, and safety—making them ideal for preventing unintended modifications to game data. This repository is geared towards Unity developers looking to leverage records for efficient and reliable data management.
+
+---
 
 ## Why Use C# Records in Unity?
 
 - **Immutability**: Records inherently support immutability, meaning once an object is created, its state cannot be changed. This ensures data consistency and prevents unintended side effects.
 - **Simplicity**: With records, developers can create concise data models with less boilerplate code, making data handling simpler and more efficient.
 - **Maintainability**: Records lead to cleaner, more reliable code, reducing bugs and making maintenance easier over time.
+
+---
+
+## How to Enable Records from C# 9 in Unity 6 Or Lower
+
+- Unity may not fully support some of the newer C# features, such as **Records** are a feature introduced in C# 9.0 that provide a concise way to create immutable reference types with built-in value-based equality.
+- They are ideal for representing data models where the data should not change after creation.
+
+## Why Define `IsExternalInit`?
+
+- Records rely on **init-only setters** to allow property values to be set during object initialization but remain immutable afterward.
+- Unity's current C# support might not include the `IsExternalInit` class, which is necessary for the compiler to recognize init-only setters.
+
+1. **Create the `IsExternalInit` Class:**
+    - In your Unity project, create a new C# script named `IsExternalInit.cs`.
+    - Replace its content with the following code:
+
+      ```csharp
+      namespace System.Runtime.CompilerServices {
+          internal static class IsExternalInit { }
+      }
+      ```
+
+---
 
 ## Key Concepts Demonstrated
 
@@ -33,106 +63,69 @@ The repository provides examples of how to use records in Unity across different
 - **Data Modeling**: Structuring data effectively for game systems like inventory, player states, and events.
 - **Event-Driven Systems**: Leveraging records for immutably defined events, supporting a clean and dependable event-driven architecture.
 
+---
+
 ## Example Overview
 <details>
 <summary><strong>Concept</strong></summary>
 
 ```csharp
-public class StructVsRecordComparer : MonoBehaviour
-{
-    // Define a simple struct
-    // Structs are value types, meaning they are copied by value.
-    // This makes structs useful for small, lightweight data that you want to be copied by data rather than reference.
-    public struct PlayerStatsStruct
-    {
-        public int Health { get; }  // Struct properties are immutable due to the readonly nature.
-        public int AttackPower { get; }
+        // ==== Struct Example ====
+        // Structs are value types and are copied by value.
+        // Useful for small, immutable data types.
+        // Keep under 16 bytes
+        public struct PlayerStatsStruct {
+            public int Health { get; } // Read-only properties for immutability
+            public int AttackPower { get; }
 
-        public PlayerStatsStruct(int health, int attackPower)
-        {
-            Health = health;
-            AttackPower = attackPower;
-        }
-
-        // Explicit comparison method for struct
-        // Structs do not have built-in equality methods, so we must manually implement the Equals method.
-        public override bool Equals(object obj)
-        {
-            if (obj is PlayerStatsStruct other)
-            {
-                return Health == other.Health && AttackPower == other.AttackPower;
+            public PlayerStatsStruct(int health, int attackPower) {
+                Health = health;
+                AttackPower = attackPower;
             }
-            return false;
+
+            // Overriding Equals method
+            public override bool Equals(object obj) {
+                if (obj is PlayerStatsStruct other) {
+                    return Health == other.Health && AttackPower == other.AttackPower;
+                }
+
+                return false;
+            }
+
+            // Overriding GetHashCode method
+            public override int GetHashCode() => HashCode.Combine(Health, AttackPower);
+
+            // Overriding ToString method
+            public override string ToString() => $"PlayerStatsStruct(Health: {Health}, AttackPower: {AttackPower})";
+
+            // Implementing Deconstruct method for deconstruction
+            public void Deconstruct(out int health, out int attackPower) {
+                health = Health;
+                attackPower = AttackPower;
+            }
         }
 
-        // Override GetHashCode for consistent behavior when used in collections
-        // This ensures structs with the same data produce the same hash code.
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Health, AttackPower);
+        // ==== Record Class Example ====
+        // Record classes are reference types with built-in methods.
+        // They are immutable by default and provide value-based equality.
+        public record PlayerStatsRecordClass(int Health, int AttackPower);
+
+        // ==== Mutable Record Class Example ====
+        // Mutable records are reference types with mutable properties.
+        // **Not recommended** due to potential side effects and complexities.
+        // This should just be a normal class if mutability is required.
+        public record MutablePlayerStatsRecordClass(int Health, int AttackPower) {
+            public int Health { get; set; } = Health;
+            public int AttackPower { get; set; } = AttackPower;
+
+            public override string ToString() => $"MutablePlayerStatsRecordClass(Health: {Health}, AttackPower: {AttackPower})";
+
+            // Implementing Deconstruct method for deconstruction
+            public void Deconstruct(out int health, out int attackPower) {
+                health = Health;
+                attackPower = AttackPower;
+            }
         }
-
-        // ToString for display purposes
-        // Provides a human-readable string representation of the struct.
-        public override string ToString()
-        {
-            return $"PlayerStatsStruct(Health: {Health}, AttackPower: {AttackPower})";
-        }
-    }
-
-    // Define a record
-    // Records are reference types, similar to classes, but are designed to be immutable and have built-in equality checks.
-    // Records come with several automatically generated methods, including:
-    // - Equals: Provides a value-based equality comparison.
-    // - GetHashCode: Generates a consistent hash code based on the values of all properties.
-    // - ToString: Automatically generates a human-readable string representation of the record.
-    public record PlayerStatsRecord(int Health, int AttackPower);
-
-    void Start()
-    {
-        // Create instances of struct and record
-        var playerStruct1 = new PlayerStatsStruct(100, 50);
-        var playerStruct2 = playerStruct1;  // Copy by value
-        var playerRecord1 = new PlayerStatsRecord(100, 50);
-        var playerRecord2 = playerRecord1;  // Copy by reference
-
-        // Demonstrate struct behavior (copied by value)
-        // Structs are value types, so assigning playerStruct1 to playerStruct2 creates an independent copy.
-        Debug.Log($"Original Struct: {playerStruct1}");
-        playerStruct2 = new PlayerStatsStruct(120, 60);  // Modify the copy
-        Debug.Log($"Modified Struct Copy: {playerStruct2}");
-        Debug.Log($"Original Struct after modifying copy: {playerStruct1}"); // Original struct remains unchanged
-
-        // Demonstrate record behavior (copied by reference)
-        // Records, being reference types, will point to the same memory location when assigned, meaning changes affect all references.
-        Debug.Log($"Original Record: {playerRecord1}");
-        Debug.Log($"Copied Record Reference: {playerRecord2}");
-        Debug.Log($"Are playerRecord1 and playerRecord2 equal? {playerRecord1 == playerRecord2}"); // True because records compare by value
-        
-        // Since records are immutable, to "modify" we create a new instance using 'with'
-        // The 'with' keyword allows you to create a new record with modified values while keeping the original intact.
-        var modifiedRecord = playerRecord1 with { Health = 150 };
-        Debug.Log($"Modified Record (with new value): {modifiedRecord}");
-        Debug.Log($"Original Record remains unchanged: {playerRecord1}");
-
-        // Demonstrate immutability of structs and records
-        // Copying a struct creates a new independent instance, which means changes to the copy do not affect the original.
-        var structCopy = playerStruct1;
-        structCopy = new PlayerStatsStruct(150, 75);  // Modify the copy
-        Debug.Log($"Original Struct after modifying structCopy: {playerStruct1}"); // Original struct remains unchanged
-        Debug.Log($"Modified Struct Copy: {structCopy}");
-
-        // Copying a record creates a new reference to the same instance, which means both point to the same data.
-        var recordCopy = playerRecord1;
-        Debug.Log($"Original Record: {playerRecord1}");
-        Debug.Log($"Copied Record Reference: {recordCopy}");
-        
-        // Since records are immutable by default, modifying a copy requires creating a new record using the 'with' keyword.
-        var modifiedRecordCopy = recordCopy with { AttackPower = 75 };
-        Debug.Log($"Modified Record Copy (with new value): {modifiedRecordCopy}");
-        Debug.Log($"Original Record remains unchanged: {playerRecord1}");
-    }
-}
 ```
 </details>
 
