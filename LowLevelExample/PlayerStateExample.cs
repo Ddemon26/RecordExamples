@@ -7,7 +7,7 @@ namespace TCS {
         readonly PlayerState m_currentPlayerState = new
         (
             new Vector3(0, 1, 0), 100, 2500, new InventoryItem[] {
-                new(1, "Sword", "Weapon"), new(2, "Potion", "Consumable")
+                new(1, "Sword", "Weapon"), new(2, "Potion", "Consumable"),
             }
         );
 

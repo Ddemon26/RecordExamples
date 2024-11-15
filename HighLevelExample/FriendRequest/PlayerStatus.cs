@@ -8,7 +8,7 @@
             Online,
             Offline,
             InGame,
-            Away
+            Away,
         }
     }
 }
